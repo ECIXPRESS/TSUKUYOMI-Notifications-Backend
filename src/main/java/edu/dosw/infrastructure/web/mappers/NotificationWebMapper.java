@@ -35,8 +35,8 @@ public class NotificationWebMapper {
                 .build();
     }
 
-    public NotificationResponse.DeliveryAttemptResponse toDeliveryAttemptResponse(DeliveryAttempt attempt) {
-        return NotificationResponse.DeliveryAttemptResponse.builder()
+    private DeliveryAttemptResponse toDeliveryAttemptResponse(DeliveryAttempt attempt) {
+        return DeliveryAttemptResponse.builder()
                 .channel(attempt.getChannel().name())
                 .successful(attempt.isSuccessful())
                 .error(attempt.getError())
