@@ -23,7 +23,7 @@ public class EventController {
         try {
             log.info("Received successful login event for user: {}", loginCommand.getUserId());
 
-            NotificationCommand command = new NotificationCommand();
+            LoginEventCommand command = new LoginEventCommand();
             command.setUserId(loginCommand.getUserId());
             command.setEmail(loginCommand.getEmail());
             command.setName(loginCommand.getName());

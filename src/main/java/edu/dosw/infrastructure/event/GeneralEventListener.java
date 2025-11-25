@@ -1,8 +1,10 @@
 package edu.dosw.infrastructure.event;
 
 import edu.dosw.application.ports.EventServicePort;
+import edu.dosw.application.dto.command.LoginEventCommand;
 import edu.dosw.application.dto.command.NotificationCommand;
 import edu.dosw.application.dto.command.PasswordResetNotificationCommand;
+import edu.dosw.application.dto.command.PaymentCommand;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.Message;
@@ -53,6 +55,12 @@ public class GeneralEventListener implements MessageListener {
                 case "password.reset.completed":
                     handlePasswordResetCompleted(eventWrapper);
                     break;
+                case "payment.completed":
+                    handlePaymentCompleted(eventWrapper);
+                    break;
+                case "payment.failed":
+                    handlePaymentFailed(eventWrapper);
+                    break;
                 default:
                     log.warn("Tipo de evento no manejado: {}", eventWrapper.getEventType());
                     handleUnknownEvent(eventWrapper);
@@ -71,7 +79,7 @@ public class GeneralEventListener implements MessageListener {
         try {
             LoginEventData data = objectMapper.convertValue(wrapper.getData(), LoginEventData.class);
 
-            NotificationCommand command = new NotificationCommand();
+            LoginEventCommand command = new LoginEventCommand();
             command.setUserId(data.getUserId());
             command.setEmail(data.getEmail());
             command.setName(data.getName());
@@ -148,14 +156,7 @@ public class GeneralEventListener implements MessageListener {
             command.setName(data.getName());
             command.setVerificationCode(data.getVerificationCode());
 
-            // Cast al service para usar el método sobrecargado
-            if (eventServicePort instanceof edu.dosw.application.services.NotificationApplicationService) {
-                edu.dosw.application.services.NotificationApplicationService service =
-                        (edu.dosw.application.services.NotificationApplicationService) eventServicePort;
-                service.processPasswordResetRequest(command);
-            } else {
-                log.error("EventServicePort no es una instancia de NotificationApplicationService");
-            }
+            eventServicePort.processPasswordResetRequest(command);
 
             log.info("Notificación de password reset procesada para: {}", data.getEmail());
 
@@ -172,13 +173,7 @@ public class GeneralEventListener implements MessageListener {
             command.setEmail(data.getEmail());
             command.setVerificationCode(data.getVerificationCode());
 
-            if (eventServicePort instanceof edu.dosw.application.services.NotificationApplicationService) {
-                edu.dosw.application.services.NotificationApplicationService service =
-                        (edu.dosw.application.services.NotificationApplicationService) eventServicePort;
-                service.processPasswordResetVerified(command);
-            } else {
-                log.error("EventServicePort no es una instancia de NotificationApplicationService");
-            }
+            eventServicePort.processPasswordResetVerified(command);
 
             log.info("Notificación de password reset verificado para: {}", data.getEmail());
 
@@ -196,18 +191,77 @@ public class GeneralEventListener implements MessageListener {
             command.setEmail(data.getEmail());
             command.setName(data.getName());
 
-            if (eventServicePort instanceof edu.dosw.application.services.NotificationApplicationService) {
-                edu.dosw.application.services.NotificationApplicationService service =
-                        (edu.dosw.application.services.NotificationApplicationService) eventServicePort;
-                service.processPasswordResetCompleted(command);
-            } else {
-                log.error("EventServicePort no es una instancia de NotificationApplicationService");
-            }
+            eventServicePort.processPasswordResetCompleted(command);
 
             log.info("Notificación de password reset completado para: {}", data.getEmail());
 
         } catch (Exception e) {
             log.error("Error en handlePasswordResetCompleted: {}", e.getMessage(), e);
+        }
+    }
+
+
+    private void handlePaymentCompleted(EventWrapper wrapper) {
+        try {
+            PaymentEventData data = objectMapper.convertValue(wrapper.getData(), PaymentEventData.class);
+
+            PaymentCommand command = new PaymentCommand();
+            command.setUserId(data.getClientId());
+            command.setEmail(data.getCustomerEmail()); // Necesitamos agregar este campo
+            command.setName("Cliente"); // Podemos obtenerlo de otra fuente o usar un valor por defecto
+            command.setOrderId(data.getOrderId());
+            command.setAmount(data.getFinalAmount());
+            command.setPaymentStatus("COMPLETED");
+            command.setPaymentMethod(extractPaymentMethod(data.getPaymentMethod()));
+
+            eventServicePort.processPaymentCompleted(command);
+
+            log.info("Notificación de pago completado - Order: {}, Client: {}, Amount: {}",
+                    data.getOrderId(), data.getClientId(), data.getFinalAmount());
+
+        } catch (Exception e) {
+            log.error("Error en handlePaymentCompleted: {}", e.getMessage(), e);
+        }
+    }
+
+    private void handlePaymentFailed(EventWrapper wrapper) {
+        try {
+            PaymentEventData data = objectMapper.convertValue(wrapper.getData(), PaymentEventData.class);
+
+            PaymentCommand command = new PaymentCommand();
+            command.setUserId(data.getClientId());
+            command.setEmail(data.getCustomerEmail()); // Necesitamos agregar este campo
+            command.setName("Cliente");
+            command.setOrderId(data.getOrderId());
+            command.setAmount(data.getFinalAmount());
+            command.setPaymentStatus("FAILED");
+            command.setPaymentMethod(extractPaymentMethod(data.getPaymentMethod()));
+
+            eventServicePort.processPaymentFailed(command);
+
+            log.info("Notificación de pago fallido - Order: {}, Client: {}",
+                    data.getOrderId(), data.getClientId());
+
+        } catch (Exception e) {
+            log.error("Error en handlePaymentFailed: {}", e.getMessage(), e);
+        }
+    }
+
+    // Método auxiliar para extraer el método de pago como String
+    private String extractPaymentMethod(Object paymentMethod) {
+        if (paymentMethod == null) {
+            return "UNKNOWN";
+        }
+        if (paymentMethod instanceof String) {
+            return (String) paymentMethod;
+        }
+        // Si es un objeto, intenta extraer el tipo
+        try {
+            return objectMapper.convertValue(paymentMethod, java.util.Map.class)
+                    .getOrDefault("methodType", "UNKNOWN")
+                    .toString();
+        } catch (Exception e) {
+            return paymentMethod.toString();
         }
     }
 
@@ -281,5 +335,20 @@ public class GeneralEventListener implements MessageListener {
         private String userId;
         private String name;
         private boolean success;
+    }
+
+
+    @lombok.Data
+    public static class PaymentEventData {
+        private String orderId;
+        private String clientId;
+        private String storeId;
+        private Double originalAmount;
+        private Double finalAmount;
+        private Object paymentMethod;
+        private String paymentStatus;
+        private Object timeStamps;
+        private java.util.List<String> appliedPromotions;
+        private String customerEmail;
     }
 }

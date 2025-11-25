@@ -14,7 +14,7 @@ import java.util.List;
 public class Notification {
     private NotificationId id;
     private String userId;
-    private String userEmail;    // ← NUEVO CAMPO
+    private String userEmail;
     private String title;
     private String message;
     private NotificationType type;
