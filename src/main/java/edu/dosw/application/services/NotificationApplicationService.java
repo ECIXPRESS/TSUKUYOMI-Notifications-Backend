@@ -34,7 +34,12 @@ public class NotificationApplicationService implements EventServicePort {
             Notification notification = createLoginNotification(command);
             Notification savedNotification = notificationRepositoryPort.save(notification);
 
-            boolean emailSuccessful = emailServicePort.sendNotificationEmail(savedNotification);
+            boolean emailSuccessful = emailServicePort.sendHtmlEmail(
+                    command.getEmail(),
+                    " Nueva Actividad de Inicio de Sesión - ECI Express",
+                    buildLoginEmailHtml(command.getName(), command.getIp())
+            );
+
             savedNotification.addDeliveryAttempt(Channel.EMAIL, emailSuccessful,
                     emailSuccessful ? null : "Error sending email");
 
@@ -229,7 +234,7 @@ public class NotificationApplicationService implements EventServicePort {
         }
     }
 
-    // MÉTODOS PARA CREAR NOTIFICACIONES DE PAGO
+
     private Notification createPaymentCompletedNotification(PaymentCommand command) {
         return Notification.builder()
                 .id(new NotificationId(UUID.randomUUID().toString()))
@@ -273,7 +278,7 @@ public class NotificationApplicationService implements EventServicePort {
         );
     }
 
-    // MÉTODOS PARA EMAILS HTML DE PAGO
+
     private String buildPaymentCompletedEmailHtml(String name, String orderId, Double amount, String paymentMethod) {
         return "<!DOCTYPE html>\n" +
                 "<html>\n" +
@@ -344,7 +349,7 @@ public class NotificationApplicationService implements EventServicePort {
                 "</html>";
     }
 
-    // MÉTODOS EXISTENTES PARA OTRAS NOTIFICACIONES
+
     private Notification createPasswordResetNotification(PasswordResetNotificationCommand command) {
         return Notification.builder()
                 .id(new NotificationId(UUID.randomUUID().toString()))
@@ -459,7 +464,7 @@ public class NotificationApplicationService implements EventServicePort {
                 "    <style>\n" +
                 "        body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }\n" +
                 "        .container { background-color: white; padding: 30px; border-radius: 10px; max-width: 600px; margin: 0 auto; }\n" +
-                "        .code { font-size: 32px; font-weight: bold; color: #2563eb; text-align: center; margin: 20px 0; }\n" +
+                "        .code { font-size: 32px; font-weight: bold; color: #FFB44D; text-align: center; margin: 20px 0; }\n" +
                 "        .footer { margin-top: 30px; font-size: 12px; color: #666; }\n" +
                 "    </style>\n" +
                 "</head>\n" +
@@ -485,7 +490,7 @@ public class NotificationApplicationService implements EventServicePort {
                 "    <style>\n" +
                 "        body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }\n" +
                 "        .container { background-color: white; padding: 30px; border-radius: 10px; max-width: 600px; margin: 0 auto; }\n" +
-                "        .success { color: #059669; font-weight: bold; }\n" +
+                "        .success { color: #FFB44D; font-weight: bold; }\n" +
                 "        .footer { margin-top: 30px; font-size: 12px; color: #666; }\n" +
                 "    </style>\n" +
                 "</head>\n" +
@@ -497,6 +502,130 @@ public class NotificationApplicationService implements EventServicePort {
                 "        <p>Si no reconoces esta actividad, por favor contacta a soporte inmediatamente.</p>\n" +
                 "        <div class=\"footer\">\n" +
                 "            <p>Saludos,<br>El equipo de ECI Express</p>\n" +
+                "        </div>\n" +
+                "    </div>\n" +
+                "</body>\n" +
+                "</html>";
+    }
+
+    private String buildLoginEmailHtml(String name, String ip) {
+        return "<!DOCTYPE html>\n" +
+                "<html>\n" +
+                "<head>\n" +
+                "    <style>\n" +
+                "        body { \n" +
+                "            font-family: 'Arial', sans-serif; \n" +
+                "            background-color: #f8f9fa; \n" +
+                "            padding: 20px; \n" +
+                "            margin: 0;\n" +
+                "        }\n" +
+                "        .container { \n" +
+                "            background-color: white; \n" +
+                "            padding: 40px; \n" +
+                "            border-radius: 12px; \n" +
+                "            max-width: 600px; \n" +
+                "            margin: 0 auto; \n" +
+                "            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);\n" +
+                "            border-left: 5px solid #FFB44D;\n" +
+                "        }\n" +
+                "        .header { \n" +
+                "            color: #FFB44D; \n" +
+                "            font-weight: bold; \n" +
+                "            font-size: 28px; \n" +
+                "            margin-bottom: 20px;\n" +
+                "            text-align: center;\n" +
+                "        }\n" +
+                "        .highlight { \n" +
+                "            color: #FFB44D; \n" +
+                "            font-weight: bold; \n" +
+                "        }\n" +
+                "        .security-box { \n" +
+                "            background-color: #FFF9F0; \n" +
+                "            border: 2px solid #FFB44D;\n" +
+                "            border-radius: 8px; \n" +
+                "            padding: 20px; \n" +
+                "            margin: 20px 0;\n" +
+                "        }\n" +
+                "        .info-item { \n" +
+                "            margin: 10px 0; \n" +
+                "            font-size: 16px; \n" +
+                "        }\n" +
+                "        .warning { \n" +
+                "            background-color: #FFF3E0; \n" +
+                "            border-left: 4px solid #FFB44D;\n" +
+                "            padding: 15px; \n" +
+                "            margin: 20px 0;\n" +
+                "            border-radius: 4px;\n" +
+                "        }\n" +
+                "        .footer { \n" +
+                "            margin-top: 30px; \n" +
+                "            font-size: 14px; \n" +
+                "            color: #666; \n" +
+                "            text-align: center;\n" +
+                "            border-top: 1px solid #eee;\n" +
+                "            padding-top: 20px;\n" +
+                "        }\n" +
+                "        .logo { \n" +
+                "            color: #FFB44D; \n" +
+                "            font-weight: bold; \n" +
+                "            font-size: 20px; \n" +
+                "            margin-bottom: 20px;\n" +
+                "            text-align: center;\n" +
+                "        }\n" +
+                "        .button { \n" +
+                "            background-color: #FFB44D; \n" +
+                "            color: white; \n" +
+                "            padding: 12px 30px; \n" +
+                "            text-decoration: none; \n" +
+                "            border-radius: 6px; \n" +
+                "            display: inline-block; \n" +
+                "            margin: 20px 0; \n" +
+                "            font-weight: bold;\n" +
+                "            text-align: center;\n" +
+                "        }\n" +
+                "    </style>\n" +
+                "</head>\n" +
+                "<body>\n" +
+                "    <div class=\"container\">\n" +
+                "        <div class=\"logo\">ECI EXPRESS</div>\n" +
+                "        <div class=\"header\"> Actividad de Inicio de Sesión Detectada</div>\n" +
+                "        \n" +
+                "        <h2>Hola <span class=\"highlight\">" + name + "</span>,</h2>\n" +
+                "        \n" +
+                "        <p>Hemos detectado un nuevo inicio de sesión en tu cuenta. Aquí están los detalles:</p>\n" +
+                "        \n" +
+                "        <div class=\"security-box\">\n" +
+                "            <div class=\"info-item\">\n" +
+                "                <strong> Dirección IP:</strong> <span class=\"highlight\">" + ip + "</span>\n" +
+                "            </div>\n" +
+                "            <div class=\"info-item\">\n" +
+                "                <strong> Fecha y Hora:</strong> " + java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy 'a las' HH:mm")) + "\n" +
+                "            </div>\n" +
+                "            <div class=\"info-item\">\n" +
+                "                <strong> Ubicación:</strong> Aproximada basada en la IP\n" +
+                "            </div>\n" +
+                "        </div>\n" +
+                "        \n" +
+                "        <div class=\"warning\">\n" +
+                "            <strong>¿No reconoces esta actividad?</strong>\n" +
+                "            <p>Si no iniciaste sesión recientemente, tu cuenta podría estar en riesgo. Te recomendamos:</p>\n" +
+                "            <ul>\n" +
+                "                <li>Cambiar tu contraseña inmediatamente</li>\n" +
+                "                <li>Revisar los dispositivos conectados a tu cuenta</li>\n" +
+                "                <li>Contactar a soporte si necesitas ayuda</li>\n" +
+                "            </ul>\n" +
+                "        </div>\n" +
+                "        \n" +
+                "        <div style=\"text-align: center;\">\n" +
+                "            <a href=\"#\" class=\"button\">Verificar Actividad de la Cuenta</a>\n" +
+                "        </div>\n" +
+                "        \n" +
+                "        <p>Si realizaste este inicio de sesión, puedes ignorar este mensaje con tranquilidad.</p>\n" +
+                "        \n" +
+                "        <div class=\"footer\">\n" +
+                "            <p>💛 Por tu seguridad, el equipo de <strong>ECI Express</strong></p>\n" +
+                "            <p>Si tienes alguna pregunta, contáctanos a <a href=\"mailto:soporte@eciexpress.com\" style=\"color: #FFB44D;\">soporte@eciexpress.com</a></p>\n" +
+                "            <p style=\"font-size: 12px; margin-top: 10px;\">Este es un mensaje automático, por favor no respondas a este correo.</p>\n" +
                 "        </div>\n" +
                 "    </div>\n" +
                 "</body>\n" +
