@@ -1,4 +1,4 @@
-package edu.dosw.Notifications;
+package edu.dosw;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

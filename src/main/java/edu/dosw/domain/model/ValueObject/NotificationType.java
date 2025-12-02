@@ -1,0 +1,17 @@
+package edu.dosw.domain.model.ValueObject;
+
+public enum NotificationType {
+    SECURITY_LOGIN,
+    ORDER_CONFIRMED,
+    SECURITY_PASSWORD_RESET,
+    ORDER_IN_PREPARATION,
+    PAYMENT_COMPLETED,
+    PAYMENT_PROCESSED,
+    PAYMENT_FAILED,
+    PAYMENT_CREATED,
+    ORDER_READY,
+    ORDER_DELIVERED,
+    ORDER_REFUNDED,
+    SELLER_NEW_ORDER,
+    SYSTEM
+}
