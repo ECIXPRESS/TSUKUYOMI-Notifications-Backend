@@ -210,14 +210,17 @@
                         </goals>
                         <configuration>
                             <excludes>
-                                <exclude>**/config/**</exclude>
-                                <exclude>**/model/**</exclude>
-                                <exclude>**/dto/**</exclude>
-                                <exclude>**/strategy/**</exclude>
-                                <exclude>**/configurators/**</exclude>
-                                <exclude>**/exception/**</exclude>
-                                <exclude>**/default/**</exclude>
-                                <exclude>**/utils/**</exclude>
+                                <exclude>**/config/**/*</exclude>
+                                <exclude>**/dto/**/*</exclude>
+                                <exclude>**/exception/**/*</exclude>
+                                <exclude>**/strategy/**/*</exclude>
+                                <exclude>**/configurators/**/*</exclude>
+                                <exclude>**/default/**/*</exclude>
+                                <exclude>**/utils/**/*</exclude>
+                                <exclude>**/Application.class</exclude>
+                                <exclude>**/documents/**/*</exclude>
+                                <exclude>**/ValueObject/**/*</exclude>
+                                <exclude>**/mappers/*WebMapper.class</exclude>
                             </excludes>
                         </configuration>
                     </execution>
@@ -240,14 +243,16 @@
                                 </rule>
                             </rules>
                             <excludes>
-                                <exclude>**/config/**</exclude>
-                                <exclude>**/dto/**</exclude>
-                                <exclude>**/model/**</exclude>
-                                <exclude>**/strategy/**</exclude>
-                                <exclude>**/configurators/**</exclude>
-                                <exclude>**/exception/**</exclude>
-                                <exclude>**/default/**</exclude>
-                                <exclude>**/utils/**</exclude>
+                                <exclude>**/config/**/*</exclude>
+                                <exclude>**/dto/**/*</exclude>
+                                <exclude>**/exception/**/*</exclude>
+                                <exclude>**/strategy/**/*</exclude>
+                                <exclude>**/configurators/**/*</exclude>
+                                <exclude>**/default/**/*</exclude>
+                                <exclude>**/utils/**/*</exclude>
+                                <exclude>**/Application.class</exclude>
+                                <exclude>**/documents/**/*</exclude>
+                                <exclude>**/mappers/*WebMapper.class</exclude>
                             </excludes>
                         </configuration>
                     </execution>
