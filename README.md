@@ -662,6 +662,281 @@ La siguiente tabla resume los principales tipos de excepciones manejadas en el s
 
 ## 9. 🧪 Evidencia de las pruebas y cómo ejecutarlas
 
+El backend implementa una **estrategia integral de pruebas** que garantiza la calidad, funcionalidad y confiabilidad del código mediante pruebas unitarias exhaustivas.
+
+---
+
+### 🎯 Tipos de pruebas implementadas
+
+| **Tipo de prueba** | **Descripción** | **Herramientas utilizadas** |
+|-------------------|-----------------|----------------------------|
+| **Pruebas unitarias** | Validan el funcionamiento aislado de cada componente (servicios, repositorios, adaptadores, controladores, value objects) | JUnit 5, Mockito |
+| **Cobertura de código** | Mide el porcentaje de código cubierto por las pruebas | JaCoCo |
+| **Mocks y Stubs** | Aíslan componentes externos (bases de datos, servicios SMTP, WebSocket) para pruebas independientes | Mockito, @Mock, @InjectMocks |
+
+---
+
+### 📊 Cobertura de pruebas implementadas
+
+Se han implementado **más de 140 pruebas unitarias** cubriendo todas las capas de la arquitectura hexagonal:
+
+#### **🟢 Capa de Dominio**
+- ✅ `NotificationTest` (6 tests) - Lógica de negocio de notificaciones
+- ✅ `ChannelTest` (9 tests) - Enum de canales de notificación
+- ✅ `NotificationStatusTest` (9 tests) - Estados de notificaciones
+- ✅ `NotificationTypeTest` (15 tests) - Tipos de notificaciones
+- ✅ `NotificationIdTest` (9 tests) - Value Object de identificadores
+- ✅ `DeliveryAttemptTest` (8 tests) - Intentos de entrega
+
+#### **🔵 Capa de Aplicación**
+- ✅ `NotificationApplicationServiceTest` (14 tests) - Orquestación de casos de uso
+- ✅ `NotificationQueryServiceTest` (9 tests) - Consultas de notificaciones
+
+#### **🟠 Capa de Infraestructura**
+- ✅ `NotificationControllerTest` (17 tests) - Endpoints REST
+- ✅ `HealthControllerTest` (6 tests) - Health checks
+- ✅ `EventControllerTest` (9 tests) - Recepción de eventos HTTP
+- ✅ `WebSocketControllerTest` (10 tests) - Conexiones WebSocket
+- ✅ `EmailServiceAdapterTest` (6 tests) - Envío de correos
+- ✅ `WebSocketEmitterAdapterTest` (10 tests) - Emisión de notificaciones en tiempo real
+- ✅ `MongoNotificationRepositoryTest` (12 tests) - Persistencia MongoDB
+- ✅ `NotificationMongoMapperTest` (9 tests) - Mapeo de entidades
+- ✅ `GeneralEventListenerTest` (10 tests) - Escucha de eventos Redis
+
+---
+
+### 🚀 Cómo ejecutar las pruebas
+
+#### **1️⃣ Ejecutar todas las pruebas**
+
+Desde la raíz del proyecto, ejecuta:
+
+```bash
+mvn clean test
+```
+
+Este comando:
+- Limpia compilaciones anteriores (`clean`)
+- Ejecuta todas las pruebas unitarias (`test`)
+- Muestra el resultado en la consola con estadísticas
+
+**Salida esperada:**
+```
+[INFO] Tests run: 140+, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+```
+
+#### **2️⃣ Generar reporte de cobertura con JaCoCo**
+
+```bash
+mvn clean test jacoco:report
+```
+
+El reporte HTML se generará en:
+```
+target/site/jacoco/index.html
+```
+
+Abre este archivo en tu navegador para ver:
+- ✅ Cobertura por paquete
+- ✅ Cobertura por clase
+- ✅ Líneas cubiertas vs. no cubiertas
+- ✅ Complejidad ciclomática
+- ✅ Métodos y branches testeados
+
+#### **3️⃣ Ejecutar pruebas desde IntelliJ IDEA**
+
+1. Click derecho sobre la carpeta `src/test/java`
+2. Selecciona **"Run 'All Tests'"**
+3. Ver resultados en el panel inferior con indicador verde ✅
+
+#### **4️⃣ Ejecutar una prueba específica**
+
+```bash
+mvn test -Dtest=NotificationApplicationServiceTest
+```
+
+O ejecutar un test individual:
+```bash
+mvn test -Dtest=NotificationApplicationServiceTest#processSuccessfulLogin_ShouldCreateNotification
+```
+
+#### **5️⃣ Verificar la cobertura mínima**
+
+```bash
+mvn clean verify
+```
+
+Este comando ejecuta las pruebas y verifica que se cumplan los umbrales de cobertura configurados en `pom.xml`:
+- **Instrucciones:** 80% mínimo
+- **Ramas:** 70% mínimo
+
+---
+
+### 🧪 Ejemplos de pruebas unitarias implementadas
+
+#### **Ejemplo 1: Prueba de Servicio de Aplicación**
+
+```java
+@ExtendWith(MockitoExtension.class)
+class NotificationApplicationServiceTest {
+
+    @Mock
+    private NotificationRepositoryPort notificationRepository;
+
+    @Mock
+    private EmailServicePort emailService;
+
+    @Mock
+    private WebSocketEmitterPort webSocketEmitter;
+
+    @InjectMocks
+    private NotificationApplicationService notificationApplicationService;
+
+    @Test
+    void processSuccessfulLogin_ShouldCreateNotification() {
+        // Given
+        LoginEventCommand command = new LoginEventCommand();
+        command.setUserId("user123");
+        command.setEmail("test@example.com");
+        command.setName("Test User");
+        command.setIp("192.168.1.1");
+
+        when(notificationRepository.save(any(Notification.class)))
+            .thenAnswer(invocation -> invocation.getArgument(0));
+        when(emailService.sendNotificationEmail(any())).thenReturn(true);
+
+        // When
+        notificationApplicationService.processSuccessfulLogin(command);
+
+        // Then
+        verify(notificationRepository, times(1)).save(any(Notification.class));
+        verify(emailService, times(1)).sendNotificationEmail(any());
+    }
+}
+```
+
+#### **Ejemplo 2: Prueba de Controlador REST**
+
+```java
+@ExtendWith(MockitoExtension.class)
+class NotificationControllerTest {
+
+    @Mock
+    private NotificationQueryPort notificationQueryPort;
+
+    @InjectMocks
+    private NotificationController notificationController;
+
+    @Test
+    void getUserNotifications_ShouldReturnNotifications() {
+        // Given
+        String userId = "user123";
+        List<NotificationResponse> notifications = Arrays.asList(
+            NotificationResponse.builder()
+                .id("notif123")
+                .userId(userId)
+                .title("Test Notification")
+                .build()
+        );
+        when(notificationQueryPort.getByUserId(userId)).thenReturn(notifications);
+
+        // When
+        ResponseEntity<List<NotificationResponse>> response = 
+            notificationController.getUserNotifications(userId, null, null);
+
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        assertEquals(1, response.getBody().size());
+    }
+}
+```
+
+#### **Ejemplo 3: Prueba de Repositorio con MongoDB**
+
+```java
+@ExtendWith(MockitoExtension.class)
+class MongoNotificationRepositoryTest {
+
+    @Mock
+    private MongoTemplate mongoTemplate;
+
+    @Mock
+    private NotificationMongoMapper notificationMongoMapper;
+
+    @InjectMocks
+    private MongoNotificationRepository repository;
+
+    @Test
+    void save_ShouldSaveAndReturnNotification() {
+        // Given
+        Notification notification = Notification.builder()
+            .id(new NotificationId("notif123"))
+            .userId("user123")
+            .title("Test")
+            .build();
+
+        NotificationDocument document = new NotificationDocument();
+        document.setId("notif123");
+
+        when(notificationMongoMapper.toDocument(notification)).thenReturn(document);
+        when(mongoTemplate.save(document)).thenReturn(document);
+        when(notificationMongoMapper.toDomain(document)).thenReturn(notification);
+
+        // When
+        Notification result = repository.save(notification);
+
+        // Then
+        assertNotNull(result);
+        verify(mongoTemplate, times(1)).save(document);
+    }
+}
+```
+
+---
+
+### 🖼️ Evidencias de ejecución
+
+#### **1. Consola mostrando pruebas ejecutándose exitosamente**
+![Test Execution Console](/docs/images/terminalTest.png)
+
+#### **2. Reporte JaCoCo con cobertura de código**
+
+![JaCoCo Coverage Report](/docs/images/jacoco.png)
+
+---
+
+### ✅ Criterios de aceptación de pruebas
+
+Para considerar el sistema correctamente probado, se debe cumplir:
+
+- ✅ **Cobertura mínima del 80%** en servicios y lógica de negocio
+- ✅ **Todas las pruebas en estado PASSED** (sin fallos)
+- ✅ **Cero errores de compilación** en el código de pruebas
+- ✅ **Pruebas de casos felices y casos de error** implementadas
+- ✅ **Mocks configurados correctamente** para aislar dependencias externas
+- ✅ **Asserts verificando comportamiento esperado** en cada prueba
+- ✅ **Nomenclatura clara** siguiendo patrón: `metodo_Should[Expected]_When[Condition]`
+
+
+---
+
+### 🔄 Integración con CI/CD
+
+Las pruebas se ejecutan automáticamente en cada **push** o **pull request** mediante GitHub Actions:
+
+```yaml 
+      - name: Build + Test + Coverage
+        run: mvn -B clean verify
+```
+
+Esto garantiza que:
+- ✅ Ningún cambio roto llegue a producción
+- ✅ La cobertura se mantenga por encima del 80%
+- ✅ Todas las pruebas pasen antes de hacer merge
+
+---
 
 ## 10. 🗂️ Código de la implementación organizado en las respectivas carpetas
 
